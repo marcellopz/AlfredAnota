@@ -52,8 +52,12 @@ Os pacotes e pastas só são criados no incremento que precisa deles.
 
 ## Segurança
 
-- **Segredos** só em `.env` / `.env.local` (ignorados pelo git). Cada app tem um `.env.example` só com os nomes das variáveis.
-- **`service_role`** só em `apps/bot/.env` e nos secrets das Edge Functions. Nunca em `apps/web`, nunca em código cliente, nunca com prefixo `NEXT_PUBLIC_`.
+- **Um único `.env` na raiz** (ignorado pelo git) para todo o desenvolvimento. O `.env.example` da raiz traz os nomes, valores locais não secretos e um comentário explicando cada variável. Não crie `.env` dentro de `apps/*` nem de `supabase/`.
+  - Bot: carrega o arquivo com `tsx --env-file=../../.env`.
+  - Função de lembretes: `pnpm supabase functions serve --env-file .env`.
+  - Site: o `next.config` lê o `.env` da raiz e repassa **somente** as variáveis `NEXT_PUBLIC_*`. Nunca carregue o arquivo inteiro no site.
+- **Variável nova:** adicione-a ao `.env.example`, com comentário, e à validação Zod do app (`src/config.ts` no bot) no mesmo incremento. Variável para o site precisa do prefixo `NEXT_PUBLIC_` e só pode conter valor público.
+- **`service_role`** só no bot e nos secrets das Edge Functions. Nunca lida pelo site, nunca em código cliente, nunca com prefixo `NEXT_PUBLIC_`.
 - **Bot:**
   - todo acesso ao banco passa por `src/db/`; nenhum handler importa o cliente Supabase;
   - toda função de `src/db/` que toca dado de usuário recebe `userId` obrigatório e filtra por ele, mesmo com `service_role`;

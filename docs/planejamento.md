@@ -105,7 +105,7 @@ Todas as regras do plano original continuam valendo: segredos só em `.env`; `se
 - Todo `callback_query` recarrega o registro filtrando por `ctx.userId`. Se não pertencer ao usuário, responde com erro genérico.
 - Toda função SQL `security definer` tem `set search_path = ''`, nomes qualificados com schema e `revoke execute ... from public, anon, authenticated`. Depois, `grant` só para quem precisa (`authenticated` ou `service_role`).
 - Chats não vinculados: responder com a instrução de conexão e registrar em `message_log` **sem o texto** (minimização de dados, LGPD). A exceção é a Fase 0, quando ainda não existe vínculo.
-- O `.env.example` de cada app contém só os nomes das variáveis. No `.gitignore`, `.env.*` vem acompanhado de `!.env.example`.
+- Um único `.env.example` na raiz documenta todas as variáveis, sem valores secretos. No `.gitignore`, `.env.*` vem acompanhado de `!.env.example`.
 
 **Dados**
 
@@ -121,27 +121,14 @@ Todas as regras do plano original continuam valendo: segredos só em `.env`; `se
 
 ## 6. Variáveis de ambiente
 
-`apps/bot/.env` (em dev, apontando para o Supabase local, com valores de `pnpm supabase status`)
+Em desenvolvimento existe **um único `.env` na raiz**. A referência completa, com comentários, está em [`.env.example`](../.env.example).
 
-```
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_BOT_USERNAME=
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_SERVICE_ROLE_KEY=
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=
-OLLAMA_TIMEOUT_MS=30000
-```
+- **Bot:** lê todas as variáveis (`tsx --env-file=../../.env`): `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `WEB_APP_URL`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_MS`.
+- **Site:** o `next.config` lê o `.env` da raiz e repassa **somente** as `NEXT_PUBLIC_*` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`). Elas copiam os valores das variáveis do bot com a sintaxe `${NOME}`, que precisa ser expandida por esse carregador.
+- **Função de lembretes:** `pnpm supabase functions serve --env-file .env` (usa `TELEGRAM_BOT_TOKEN` e `CRON_SECRET`).
+- **Produção:** o arquivo não é usado. O site lê o painel da Vercel, a função usa `supabase secrets set`, e o bot tem um `.env` próprio na máquina onde rodar.
 
-`apps/web/.env.local`
-
-```
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=
-```
-
-**Edge Function (Fase 3):** os secrets `TELEGRAM_BOT_TOKEN` e `CRON_SECRET`. No Vault, `cron_secret` e `send_reminders_url`.
+No Vault do banco (Fase 3): `cron_secret` e `send_reminders_url`.
 
 O bot valida tudo em `src/config.ts` com Zod e falha com mensagem clara.
 
@@ -165,10 +152,10 @@ O bot valida tudo em `src/config.ts` com Zod e falha com mensagem clara.
 **Incrementos**
 
 - **0.1 Repositório:** `git init`, `.gitignore`, `CLAUDE.md`, `package.json` da raiz com `typecheck`, `tsconfig.base.json`, TypeScript na raiz e `apps/bot` estendendo a base com um `src/index.ts` mínimo. Teste: `pnpm typecheck` passa e `git status` não mostra segredos.
-- **0.2 Bot "eco":** `config.ts` com Zod, bot grammY com long polling respondendo `Recebi: <texto>`, filtro de chat privado, `bot.catch` e encerramento gracioso. Sem banco ainda. Teste: `pnpm dev:bot` e mandar mensagem ao bot de dev.
+- **0.2 Bot "eco":** `config.ts` com Zod lendo o `.env` da raiz (`tsx --env-file=../../.env`; remover o `dotenv`), bot grammY com long polling respondendo `Recebi: <texto>`, filtro de chat privado, `bot.catch` e encerramento gracioso. Sem banco ainda. Teste: `pnpm dev:bot` e mandar mensagem ao bot de dev.
 - **0.3 Supabase local:** Supabase CLI na raiz, `config.toml`, migration `init` com RLS e trigger, `packages/db` com os tipos gerados. Teste: `pnpm db:start`, `pnpm db:reset`, `pnpm db:types`, `pnpm typecheck`.
 - **0.4 Bot grava no banco:** cliente Supabase, camada `db/` e gravação em `message_log` com idempotência. Teste: a mensagem aparece no Studio local, e reprocessar não duplica.
-- **0.5 Site e pacote compartilhado:** `apps/web` com create-next-app, `packages/shared`, `transpilePackages`, `dev:web`. Confirmar aqui que o TypeScript 7 funciona com o Next; se não funcionar, fixar a versão estável anterior em todo o monorepo. Teste: `pnpm dev:web` abre a página e `pnpm typecheck` passa nos três pacotes.
+- **0.5 Site e pacote compartilhado:** `apps/web` com create-next-app, `next.config` carregando do `.env` da raiz só as variáveis `NEXT_PUBLIC_*` (com expansão de `${NOME}`), `packages/shared`, `transpilePackages`, `dev:web`. Confirmar aqui que o TypeScript 7 funciona com o Next; se não funcionar, fixar a versão estável anterior em todo o monorepo. Teste: `pnpm dev:web` abre a página e `pnpm typecheck` passa nos três pacotes.
 
 As Fases 1 a 3 são divididas em incrementos do mesmo jeito, propostos ao desenvolvedor no início de cada fase.
 
@@ -178,7 +165,7 @@ As Fases 1 a 3 são divididas em incrementos do mesmo jeito, propostos ao desenv
 - [ ] `pnpm dev:bot` sobe sem erros. Uma mensagem recebe resposta e aparece em `message_log`.
 - [ ] Reprocessar o mesmo update não duplica a linha.
 - [ ] `pnpm db:types` regenera os tipos e `pnpm typecheck` passa nos três pacotes. `pnpm dev:web` abre a página.
-- [ ] `git status` não mostra segredos e os `.env.example` aparecem como rastreados.
+- [ ] `git status` não mostra segredos e o `.env.example` da raiz aparece como rastreado.
 
 ---
 
