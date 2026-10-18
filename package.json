@@ -1,0 +1,15 @@
+{
+  "name": "alfred",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@8.15.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
