@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev:bot": "pnpm --filter bot dev",
+    "dev:web": "pnpm --filter web dev",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",

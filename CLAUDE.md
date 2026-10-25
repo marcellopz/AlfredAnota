@@ -112,6 +112,7 @@ Os comandos são adicionados à medida que os incrementos os criam. Mantenha est
 - `pnpm db:start` / `pnpm db:stop`: sobe/para o Supabase local (Docker Desktop aberto)
 - `pnpm db:reset`: recria o banco **local** aplicando as migrations
 - `pnpm db:types`: regenera `packages/db/src/database.types.ts` a partir do banco local
+- `pnpm dev:web`: sobe o site Next.js em `http://localhost:3000`
 - `pnpm dev:bot`: sobe o bot em long polling com recarga automática (lê o `.env` da raiz)
 
 ## Fora do escopo por enquanto
