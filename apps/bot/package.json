@@ -7,6 +7,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@alfred/db": "workspace:^",
     "@supabase/supabase-js": "^2.118.0",
     "grammy": "^1.46.0",
     "zod": "^4.6.7"
