@@ -109,6 +109,7 @@ Os comandos são adicionados à medida que os incrementos os criam. Mantenha est
 
 - `pnpm install`: instala as dependências do workspace
 - `pnpm typecheck`: checagem de tipos em todos os pacotes
+- `pnpm dev:bot`: sobe o bot em long polling com recarga automática (lê o `.env` da raiz)
 
 ## Fora do escopo por enquanto
 
